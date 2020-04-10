@@ -702,7 +702,7 @@ function arrayTicks(ax) {
     if(!Array.isArray(text)) text = [];
 
     // make sure showing ticks doesn't accidentally add new categories
-    // TODO multicategory, if we allow ticktext / tickvals
+    // TODO multicategory, if we allow ticktext / fs
     var tickVal2l = ax.type === 'category' ? ax.d2l_noadd : ax.d2l;
 
     // array ticks on log axes always show the full number
@@ -720,10 +720,14 @@ function arrayTicks(ax) {
         }
     }
 
+    if (ax._input && ax._input.nticks) {
+        ax.nticks = ax._input.nticks;
+    }
+
     if(j < vals.length) ticksOut.splice(j, vals.length - j);
 
     if(ax.rangebreaks) {
-        // remove ticks falling inside rangebreaks
+        // remove ticks falling inside rangebreakstickVals
         ticksOut = ticksOut.filter(function(d) {
             return ax.maskBreaks(d.x) !== BADNUM;
         });
@@ -2511,7 +2515,12 @@ axes.drawLabels = function(gd, ax, opts) {
             // only so tex has predictable alignment that we can
             // alter later
             .attr('text-anchor', 'middle')
-            .each(function(d) {
+            .each(function(d, i) {
+                if (ax && ax.nticks
+                    && i != tickLabels[0].length - 1
+                    && i != 0 && d.x % ax.nticks != 0) {
+                    return;
+                }
                 var thisLabel = d3.select(this);
                 var newPromise = gd._promises.length;
 
